@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080b0f" />
+    <meta
+      name="description"
+      content="Local, real-time fish recognition from a live webcam. Nothing is uploaded."
+    />
+    <title>AquaVision — Live Fish Recognition</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-a" aria-hidden="true"></div>
+    <div class="ambient ambient-b" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="AquaVision home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" role="img">
+            <path
+              d="M6 24c6.2-8.7 14.4-12.4 24.6-11.5l3.1-4.1 2.2 5.5 8.1 1.4-5.5 5.3 1.1 8.2-6.9-3.4C22 27.8 13.2 27.6 6 24Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linejoin="round"
+            />
+            <circle cx="15.4" cy="21.2" r="1.8" fill="currentColor" />
+            <path d="M32 27c-1.7 3.9-4.2 6.8-7.6 8.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="brand-copy">
+          <span class="brand-name">Aqua<span>Vision</span></span>
+          <span class="brand-sub">Local fish recognition</span>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <span class="connection-pill" id="connectionPill" data-state="idle">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="connectionText">Connecting…</span>
+        </span>
+        <button class="ghost-btn" id="helpBtn" type="button">Camera help</button>
+        <button class="ghost-btn" id="diagBtn" type="button">Diagnostics</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage" aria-label="Live camera">
+        <div class="video-card" id="videoCard" data-live="false">
+          <img
+            id="stream"
+            class="stream"
+            alt="Live camera feed with recognition overlay"
+            decoding="async"
+          />
+          <div class="video-grain" aria-hidden="true"></div>
+          <div class="video-hud">
+            <span class="live-badge" id="liveBadge" data-live="false">
+              <span class="live-dot" aria-hidden="true"></span>
+              <span id="liveText">OFFLINE</span>
+            </span>
+            <span class="video-meta" id="resolutionBadge">Camera not started</span>
+          </div>
+          <div class="video-footer">
+            <span class="video-device" id="deviceBadge">/dev/video0</span>
+            <span class="video-clock" id="clock">--:--:--</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <button class="btn btn-primary" id="startBtn" type="button">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20"><path d="M7 5.2v9.6l7.4-4.8L7 5.2Z" fill="currentColor" /></svg>
+              </span>
+              <span>Start Camera</span>
+            </button>
+            <button class="btn" id="stopBtn" type="button" disabled>
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20"><rect x="6" y="6" width="8" height="8" rx="1.2" fill="currentColor" /></svg>
+              </span>
+              <span>Stop</span>
+            </button>
+            <button class="btn" id="retryBtn" type="button">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20">
+                  <path d="M15.3 8.2A5.5 5.5 0 1 0 15 12.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                  <path d="M15.6 4.8v3.8h-3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>Retry</span>
+            </button>
+          </div>
+          <span class="privacy-note">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 2.6 4.2 5v4.5c0 3.6 2.4 6.4 5.8 7.9 3.4-1.5 5.8-4.3 5.8-7.9V5L10 2.6Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+              <path d="m7.6 9.9 1.6 1.6 3.2-3.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            100% local · no uploads
+          </span>
+        </div>
+
+        <div class="notice" id="errorBanner" hidden>
+          <div class="notice-icon" aria-hidden="true">!</div>
+          <div class="notice-body">
+            <strong id="errorTitle">Camera unavailable</strong>
+            <pre id="errorText"></pre>
+          </div>
+          <button class="ghost-btn small" id="errorHelpBtn" type="button">Setup steps</button>
+        </div>
+      </section>
+
+      <section class="result-panel" id="resultPanel" data-subject="not_fish" aria-label="Recognition result">
+        <div class="panel-top">
+          <span class="eyebrow">
+            <span class="eyebrow-line" aria-hidden="true"></span>
+            Live classification
+          </span>
+          <span class="model-chip" id="modelChip" data-state="loading">
+            <span class="model-chip-dot" aria-hidden="true"></span>
+            <span id="modelChipText">Loading models</span>
+          </span>
+        </div>
+
+        <div class="result-lines" aria-live="polite" aria-atomic="true">
+          <div class="result-line" id="resultLine1">Fish: —</div>
+          <div class="result-line result-line-type" id="resultLine2">Type of Fish: "—"</div>
+        </div>
+
+        <div class="confidence-block">
+          <div class="confidence-head">
+            <span>Confidence</span>
+            <strong id="confidenceValue">—</strong>
+          </div>
+          <div class="confidence-track" aria-hidden="true">
+            <span class="confidence-fill" id="confidenceBar"></span>
+          </div>
+          <div class="confidence-meta">
+            <span id="stabilityText">Stability —</span>
+            <span id="reasonText">Waiting for the camera</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat">
+            <span class="stat-label">Camera FPS</span>
+            <strong class="stat-value" id="cameraFps">—</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Analysis FPS</span>
+            <strong class="stat-value" id="analysisFps">—</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Inference</span>
+            <strong class="stat-value" id="inferenceMs">—</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Device</span>
+            <strong class="stat-value" id="deviceName">—</strong>
+          </div>
+        </div>
+
+        <div class="status-strip">
+          <span class="status-strip-dot" aria-hidden="true"></span>
+          <span id="statusText">Starting service…</span>
+        </div>
+
+        <p class="panel-footnote">
+          Species ranking is generated by BioCLIP-2 against a curated set of
+          <span class="species-total">—</span> fish.
+          A face is reported as <code>"Human"</code>; anything else is
+          <code>"Not Fish"</code>.
+        </p>
+      </section>
+    </main>
+
+    <section class="lower-grid" aria-label="Recognition details">
+      <article class="card species-card">
+        <header class="card-head">
+          <div>
+            <span class="eyebrow">Top species</span>
+            <h2>Species ranking</h2>
+          </div>
+          <span class="pill">BioCLIP-2</span>
+        </header>
+        <div class="species-list" id="speciesList">
+          <p class="empty-state" id="speciesEmpty">Waiting for a live fish observation.</p>
+        </div>
+      </article>
+
+      <article class="card pipeline-card">
+        <header class="card-head">
+          <div>
+            <span class="eyebrow">Pipeline</span>
+            <h2>How it decides</h2>
+          </div>
+          <span class="pill">On-device</span>
+        </header>
+        <ol class="pipeline-list">
+          <li>
+            <span class="pipeline-step">01</span>
+            <div>
+              <strong>Subject detection</strong>
+              <p>YuNet finds faces; YOLO-World locates fish-shaped objects.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pipeline-step">02</span>
+            <div>
+              <strong>Fish verifier</strong>
+              <p>ConvNeXt-Tiny on ImageNet-1k rejects non-fish scenes before species are named.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pipeline-step">03</span>
+            <div>
+              <strong>Species ranking</strong>
+              <p>BioCLIP-2 zero-shot compares the subject with <span class="species-total">—</span> curated species.</p>
+            </div>
+          </li>
+          <li>
+            <span class="pipeline-step">04</span>
+            <div>
+              <strong>Temporal smoothing</strong>
+              <p>Short majority voting prevents flicker and contradictory labels.</p>
+            </div>
+          </li>
+        </ol>
+        <button class="link-btn" id="speciesBtn" type="button">
+          Browse the species library
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </article>
+
+      <article class="card device-card">
+        <header class="card-head">
+          <div>
+            <span class="eyebrow">Runtime</span>
+            <h2>Engine status</h2>
+          </div>
+          <span class="pill" id="runtimePill">Starting</span>
+        </header>
+        <dl class="detail-list">
+          <div><dt>Camera</dt><dd id="runtimeCamera">—</dd></div>
+          <div><dt>Capture</dt><dd id="runtimeResolution">—</dd></div>
+          <div><dt>Device</dt><dd id="runtimeDevice">—</dd></div>
+          <div><dt>Models</dt><dd id="runtimeModels">Loading</dd></div>
+          <div><dt>Species set</dt><dd id="runtimeSpecies">—</dd></div>
+          <div><dt>Uptime</dt><dd id="runtimeUptime">—</dd></div>
+        </dl>
+        <p class="device-warning" id="deviceWarning" hidden></p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>AquaVision · real-time inference on this machine</span>
+      <span class="footer-sep" aria-hidden="true"></span>
+      <span>YuNet · YOLO-World · ConvNeXt · BioCLIP-2</span>
+    </footer>
+
+    <!-- Diagnostics modal -->
+    <div class="modal" id="diagModal" hidden>
+      <div class="modal-backdrop" data-close="diagModal"></div>
+      <div class="modal-panel wide" role="dialog" aria-modal="true" aria-labelledby="diagTitle">
+        <header class="modal-head">
+          <div>
+            <span class="eyebrow">System</span>
+            <h2 id="diagTitle">Diagnostics</h2>
+          </div>
+          <button class="icon-btn" type="button" data-close="diagModal" aria-label="Close diagnostics">×</button>
+        </header>
+        <div class="modal-body" id="diagBody">
+          <p class="empty-state">Loading diagnostics…</p>
+        </div>
+        <footer class="modal-foot">
+          <button class="ghost-btn" id="copyDiagBtn" type="button">Copy report</button>
+          <button class="btn btn-small" type="button" data-close="diagModal">Close</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Camera help modal -->
+    <div class="modal" id="helpModal" hidden>
+      <div class="modal-backdrop" data-close="helpModal"></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <header class="modal-head">
+          <div>
+            <span class="eyebrow">Setup</span>
+            <h2 id="helpTitle">Camera help</h2>
+          </div>
+          <button class="icon-btn" type="button" data-close="helpModal" aria-label="Close camera help">×</button>
+        </header>
+        <div class="modal-body prose">
+          <p>
+            This app reads the camera through Linux V4L2. Under WSL2 the Windows
+            camera has to be attached to WSL before the app can see it.
+          </p>
+          <h3>Attach the camera in Windows</h3>
+          <ol>
+            <li>Open <strong>PowerShell as Administrator</strong>.</li>
+            <li>Run <code>usbipd list</code>.</li>
+            <li>Find the Integrated Camera BUSID (for example <code>4-1</code>).</li>
+            <li>Run <code>usbipd attach --wsl --busid 4-1</code>.</li>
+            <li>Return here and press <strong>Retry</strong>.</li>
+          </ol>
+          <h3>If the feed is green or frozen</h3>
+          <p>
+            The USB/IP link can corrupt some capture modes. AquaVision checks every
+            frame and falls back through 960×540, 640×480, 1080p and YUYV
+            automatically. If no mode works, detach and re-attach the camera.
+          </p>
+          <h3>When finished</h3>
+          <p>
+            Stop the camera in the dashboard, then run
+            <code>usbipd detach --busid 4-1</code> to return the camera to Windows.
+          </p>
+          <h3>Camera busy</h3>
+          <p>
+            Close Teams, Zoom, Camera, or any other app that may have claimed the
+            camera before attaching it to WSL.
+          </p>
+        </div>
+        <footer class="modal-foot">
+          <button class="btn btn-small" type="button" data-close="helpModal">Got it</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Species library modal -->
+    <div class="modal" id="speciesModal" hidden>
+      <div class="modal-backdrop" data-close="speciesModal"></div>
+      <div class="modal-panel wide" role="dialog" aria-modal="true" aria-labelledby="speciesTitle">
+        <header class="modal-head">
+          <div>
+            <span class="eyebrow">BioCLIP-2</span>
+            <h2 id="speciesTitle">Species library</h2>
+          </div>
+          <button class="icon-btn" type="button" data-close="speciesModal" aria-label="Close species library">×</button>
+        </header>
+        <div class="modal-body">
+          <label class="search-field">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.8" cy="8.8" r="4.9" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="m12.4 12.4 3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+            <input id="speciesSearch" type="search" placeholder="Filter by common or scientific name" autocomplete="off" />
+          </label>
+          <p class="species-count" id="speciesCount">Loading…</p>
+          <div class="species-grid" id="speciesGrid"></div>
+        </div>
+        <footer class="modal-foot">
+          <button class="btn btn-small" type="button" data-close="speciesModal">Close</button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

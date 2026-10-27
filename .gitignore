@@ -1,0 +1,90 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python bytecode, build output, and tool caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+credentials*
+
+# Logs and generated runtime output
+*.log
+logs/
+artifacts/
+*.pid
+*.tmp
+*.part
+
+# Personal media, webcam captures, and private datasets
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+data/
+datasets/
+
+# Keep genuine UI assets and documentation screenshots
+!app/static/**/*.png
+!app/static/**/*.jpg
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.svg
+
+# Model weights and caches (reproducible through scripts/download_models.py)
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.safetensors
+models/*.bin
+models/*.ckpt
+models/*.gguf
+models/hf_cache/
+models/**/snapshots/
+weights/
+*.ckpt
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#102028"/>
+      <stop offset="1" stop-color="#071015"/>
+    </linearGradient>
+    <linearGradient id="fish" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
+  <rect x="1" y="1" width="62" height="62" rx="14" fill="none" stroke="#2dd4bf" stroke-opacity=".35"/>
+  <path d="M11 33c8-11 19-15.5 32-14l4-5 2.8 7 10 1.8-7 6.7 1.4 10.4-8.8-4.3C31.5 38.7 20 38.4 11 33Z" fill="none" stroke="url(#fish)" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="23" cy="29.5" r="2.4" fill="#5eead4"/>
+  <path d="M44 37c-2.2 5-5.4 8.6-9.7 11.1" fill="none" stroke="#5eead4" stroke-width="2.6" stroke-linecap="round" opacity=".7"/>
+</svg>
