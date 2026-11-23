@@ -1,0 +1,183 @@
+# FOUR-CLASS FISH-GROUP MAPPING — PROVISIONAL (lecturer approval pending)
+#
+# Student S79244. This defines FISH-GROUP CLASSIFICATION, not 80-species
+# identification: each of the 80 recognition labels in app/species.py is
+# assigned to exactly one higher-level, mutually exclusive group.
+#
+# Selection criteria (priority order): correct/consistent labels, 320 eligible
+# images, similar group sizes, simple explainable definitions, no changes to
+# existing code beyond configuration, fast training.
+#
+# Result: 16/20/20/24 labels = 64/80/80/96 images (ratio 1.5:1). Every label is
+# mapped exactly once; no image is duplicated or relabelled.
+
+project: "S79244_Fish_Species_Detection"
+student_id: "S79244"
+topic: "Fish-group classification (four scientifically defensible groups)"
+total_source_labels: 80
+images_per_label: 4
+expected_total_images: 320
+approximate_balance: true
+
+categories:
+  - id: freshwater_tropical_ornamental
+    name: "Tropical freshwater ornamental fishes"
+    criterion: "Osteichthyes; warm-water freshwater species kept as ornamentals"
+    biological_justification: >
+      Small-bodied or brightly coloured freshwater fishes of tropical rivers
+      and aquaria (characins, poeciliids, cichlids, anabantids, silurids,
+      osteoglossids, freshwater pufferfish). Visually and ecologically
+      coherent: warm freshwater, often aquarium-kept.
+    labels:
+      - Arapaima
+      - Arowana
+      - Betta
+      - Catfish
+      - Cichlid
+      - Discus
+      - Gourami
+      - Guppy
+      - Loach
+      - Molly
+      - Neon tetra
+      - Oscar
+      - Peacock bass
+      - Piranha
+      - Pufferfish
+      - Tilapia
+
+  - id: freshwater_temperate_game
+    name: "Temperate freshwater and migratory game fishes"
+    criterion: "Osteichthyes; cool/temperate freshwater or freshwater-spawning migratory species"
+    biological_justification: >
+      Cyprinids, percids, esocids, centrarchids, salmonids, eels and sturgeons
+      whose adult or spawning habitat is temperate fresh water. Migratory
+      members (salmon, trout, eel, sturgeon) are grouped by their freshwater
+      life-history stage, applied consistently to all of them.
+    labels:
+      - Atlantic salmon
+      - Arctic char
+      - Rainbow trout
+      - Brown trout
+      - Eel
+      - Sturgeon
+      - Goldfish
+      - Koi
+      - Common carp
+      - Rohu
+      - Catla
+      - Bream
+      - Roach
+      - Tench
+      - Perch
+      - Pike
+      - Zander
+      - Walleye
+      - Largemouth bass
+      - Bluegill
+
+  - id: marine_reef_coastal
+    name: "Marine reef and coastal/estuarine fishes"
+    criterion: "Osteichthyes; coral/rocky-reef associated or coastal-estuarine"
+    biological_justification: >
+      Reef-associated taxa (pomacentrids, labrids, chaetodontids, acanthurids,
+      pomacanthids, serranids, lutjanids, balistids, scorpaenids) plus
+      inshore/estuarine euryhaline taxa and the genus-level Goby label. A
+      single habitat guild: shallow marine reef and coast, not open ocean.
+    labels:
+      - Angelfish
+      - Blue tang
+      - Butterflyfish
+      - Clownfish
+      - Damselfish
+      - Grouper
+      - Lionfish
+      - Parrotfish
+      - Scorpionfish
+      - Seahorse
+      - Snapper
+      - Triggerfish
+      - Wrasse
+      - Bonefish
+      - Flounder
+      - Milkfish
+      - Mullet
+      - Sea bass
+      - Tarpon
+      - Goby
+
+  - id: marine_pelagic_demersal
+    name: "Marine open-water and bottom fishes (including cartilaginous)"
+    criterion: "Fully marine, non-reef: pelagic or demersal; cartilaginous or bony"
+    biological_justification: >
+      Open-water and sea-floor taxa (tunas, billfishes, gadids, flatfishes,
+      clupeids, monkfish) plus Chondrichthyes (sharks and rays). All are
+      fully marine and non-reef; cartilaginous fishes are included here
+      because their 6 labels alone are too small for a separate class.
+    labels:
+      - Great white shark
+      - Tiger shark
+      - Hammerhead shark
+      - Whale shark
+      - Stingray
+      - Manta ray
+      - Anchovy
+      - Barracuda
+      - Cod
+      - Haddock
+      - Hake
+      - Halibut
+      - Herring
+      - Mackerel
+      - Mahi-mahi
+      - Marlin
+      - Monkfish
+      - Ocean sunfish
+      - Pollock
+      - Sardine
+      - Sole
+      - Swordfish
+      - Tuna
+      - Turbot
+
+labels_not_in_source_list: []
+expected_images_per_category:
+  freshwater_tropical_ornamental: 64
+  freshwater_temperate_game: 80
+  marine_reef_coastal: 80
+  marine_pelagic_demersal: 96
+
+ambiguous_or_problematic_assignments:
+  - label: Goby / Cichlid / Catfish / Loach
+    issue: "Genus/family-level labels rather than species; assigned by the habitat of the collected taxa."
+  - label: Pufferfish
+    issue: "Read as the freshwater species in app/species.py; marine puffers would belong in group 4."
+  - label: Atlantic salmon / Arctic char / trout / Eel / Sturgeon
+    issue: "Migratory; grouped consistently by freshwater life-history stage (spawning or feeding)."
+  - label: Flounder / Mullet / Sea bass / Molly / Milkfish / Tarpon
+    issue: "Euryhaline; grouped by coastal/estuarine adult habitat rather than open ocean."
+  - label: Sharks and rays
+    issue: "Taxonomically distinct (cartilaginous) but only 6 labels; merged into fully marine non-reef group to avoid a 24-image class."
+
+feasibility_assessment:
+  five_balanced_categories_feasible: false
+  four_balanced_categories_feasible: true
+  reason: >
+    Four groups give 64/80/80/96 images (1.5:1). Five groups force either a
+    24-image cartilaginous class or an scientifically incoherent overflow
+    class. Four groups keep every rule consistent and all 320 images.
+  recommendation: >
+    Use four groups and describe the task as fish-group classification.
+    Lecturer approval still required before training.
+
+current_dataset_state:
+  total_images: 320
+  labels_collected: 80
+  labels_total: 80
+  human_verified: 0
+  needs_review: 28
+  note: >
+    Collection complete. Audit reports 320/320 decodable, no exact or
+    perceptual near-duplicates, 6 quality-flagged images, 28 automated
+    needs-review. Zero human approvals: training is gated until review is
+    complete. See assignment/reports/phase1_audit.json.

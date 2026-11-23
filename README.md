@@ -17,6 +17,13 @@ no cloud APIs, demo feeds, or random/hardcoded answers.
 replaces the offline placeholder with the webcam feed; a personal webcam image is
 not published here.*
 
+This repository also contains a **separate academic four-class classifier**
+(student S79244) under `assignment/`. It is an offline study built on a 320-image
+fish dataset and does **not** replace, retrain, or alter the live 80-species
+webcam system. Its pipeline is implemented; no academic training or evaluation
+results are claimed. See [assignment/README.md](assignment/README.md) and
+[docs/DATASET.md](docs/DATASET.md).
+
 ---
 
 ## Verified on this machine
@@ -29,7 +36,7 @@ not published here.*
 | Camera | Integrated RGB Camera through `usbipd`, `960x540 MJPG` |
 | Live UI | camera ~15 fps, analysis **6.9–9.1 fps**, inference **71–96 ms** |
 | Human result | `Fish: False` / `Type of Fish: "Human"`, confidence 0.84–0.92 |
-| Tests | **49 passed** (`./run_tests.sh`) |
+| Tests | **137 passed** (`./run_tests.sh`: 91 app/collector + 46 academic) |
 | Live check | `scripts/verify_live.py` passes and releases the camera |
 | Offline | Verified with `HF_HUB_OFFLINE=1`; models load from `models/` |
 
@@ -161,7 +168,7 @@ Either path releases the camera through the service shutdown handler.
 Useful commands:
 
 ```bash
-./run_tests.sh                                        # 49 tests
+./run_tests.sh                                        # 137 tests (all suites)
 .venv/bin/python scripts/verify_live.py               # real camera + models
 .venv/bin/python scripts/download_models.py --verify  # asset check
 ```
@@ -331,7 +338,9 @@ The live list is always available at `/api/species`.
 ### Automated tests
 
 ```text
-49 passed
+./run_tests.sh                         137 passed
+pytest tests/                          91 passed (webcam app + collector)
+pytest assignment/tests/               46 passed (academic pipeline)
 ```
 
 Coverage includes decision rules and display invariants, temporal smoothing,
@@ -373,6 +382,96 @@ Known misses in that set:
   conservative threshold.
 
 This is a spot check, not a scientific accuracy benchmark.
+
+---
+
+## Academic fish-group classifier (S79244)
+
+A separate, offline supervised study in `assignment/`. It is deliberately a
+**fish-group classifier**, not the 80-species webcam model and not an
+80-species detector. The existing `app/species.py` list and all live models are
+untouched.
+
+### Classes
+
+| Class | Rule | Source labels | Images |
+| --- | --- | ---: | ---: |
+| `freshwater_tropical_ornamental` | warm-water freshwater ornamentals | 16 | 64 |
+| `freshwater_temperate_game` | temperate / freshwater-spawning migratory | 20 | 80 |
+| `marine_reef_coastal` | shallow reef, coastal, estuarine | 20 | 80 |
+| `marine_pelagic_demersal` | fully marine open-water/bottom, incl. cartilaginous | 24 | 96 |
+
+All 80 labels map exactly once; no image is duplicated or relabelled. The
+rationale and every ambiguous assignment are documented in
+`assignment/config/mapping.yaml`. Four groups were chosen because five balanced
+groups would force a 24-image cartilaginous class or an incoherent overflow
+class. The grouping requires lecturer approval.
+
+### Dataset and collection
+
+320 photographs, 4 per label, sourced with `tools/collect_fish_samples.py` from
+iNaturalist (288) and Wikimedia Commons (32). Licences: mostly CC BY 4.0 (250),
+plus CC BY-SA, CC0, CC BY and public-domain images. Source URLs, authors,
+attribution, licences and SHA-256 hashes are recorded per image in
+`SAMPLES FISH/metadata.csv`. **The photographs are not committed to Git**; do not
+publish them without checking each licence and attribution. See
+[docs/DATASET.md](docs/DATASET.md) for the licence table and reproduction notes.
+
+Verified audit: 320/320 decode, 0 missing/checksum mismatches, 0 exact or
+perceptual duplicates, 6 quality flags, 28 `needs_review`, 0 human-verified
+images. The review manifest currently contains one **test-only** approval
+(`Test Reviewer`) that is not a genuine human decision and must be replaced
+before training; it was left untouched during cleanup.
+
+### Architecture and training
+
+Pretrained TorchVision **ResNet-18** (ImageNet-1K weights), FC replaced with
+`Linear(512 → 4)`, all layers fine-tuned. Input 224×224; train transform
+RandomResizedCrop + horizontal flip + ColorJitter + ImageNet normalization;
+eval transform Resize(256) + CenterCrop(224) + normalization. Cross-entropy,
+AdamW (lr 1e-3, weight decay 1e-4), batch 32, up to 30 epochs, early stopping on
+validation loss (patience 5) with best-checkpoint saving, fixed seed 1337, CUDA
+when available. Splitting is deterministic, stratified and group-aware
+(70/15/15) with source observations kept in one split.
+
+### Reproduce
+
+```bash
+# Audit (read-only) and tests
+.venv/bin/python assignment/scripts/audit_dataset.py
+.venv/bin/python -m pytest assignment/tests/ -q
+
+# Human review: view overview_all_images.jpg, fill the decision column, apply
+.venv/bin/python -m assignment.cli review contact-sheets --single
+.venv/bin/python -m assignment.cli review decide-batch \
+  assignment/data/review/review_worksheet.csv --reviewer "Your Name"
+
+# Prepare (strict: human-verified only; or opt-in automated screening)
+.venv/bin/python -m assignment.cli prepare --seed 1337 --device auto \
+  --review-manifest assignment/data/review_manifest.json \
+  --out assignment/artifacts/prepare
+.venv/bin/python -m assignment.cli prepare --review-policy automated-screening \
+  --out assignment/artifacts/prepare_expedited
+
+# Train once, then evaluate once on the untouched test set
+.venv/bin/python -m assignment.cli train --review-policy automated-screening \
+  --seed 1337 --device auto --epochs 30 --batch-size 32 --lr 1e-3 \
+  --optimizer adamw --weight-decay 1e-4 --patience 5 \
+  --run-dir assignment/artifacts/run
+.venv/bin/python -m assignment.cli evaluate \
+  --checkpoint assignment/artifacts/run/best_model.pt \
+  --split-manifest assignment/artifacts/run/split_manifest.json \
+  --output-dir assignment/artifacts/eval --device auto
+```
+
+**Performance metrics are not available:** neither an academic checkpoint nor
+evaluation outputs exist yet, and the review gate is not satisfied. All report
+fields are placeholders in `assignment/report/outline.md` until a real run
+completes. Do not use the test set for class or hyperparameter selection.
+
+References: He et al., *Deep Residual Learning for Image Recognition* (2016);
+TorchVision ResNet-18 ImageNet-1K weights; iNaturalist; Wikimedia Commons;
+`app/species.py` (curated 80-label list).
 
 ---
 
@@ -436,13 +535,29 @@ models/            weights + offline Hugging Face cache + CHECKSUMS.txt
 scripts/
   download_models.py   install/verify assets
   verify_live.py       real end-to-end live check
-tests/             49 pytest tests
-docs/              genuine dashboard screenshot
+tests/             91 pytest tests (webcam app + collector)
+assignment/        academic four-class classifier, dataset tools, report
+  README.md        reproducible academic commands and status
+  config/          four-class mapping (provisional)
+  data/            manifest, splitting, review workflow, contact sheets
+  model/           ResNet-18 backbone
+  train.py         training loop
+  evaluate.py      metrics, figures, predictions
+  scripts/         read-only dataset audit
+  reports/         phase-1 audit
+  report/          report draft (placeholders until results exist)
+  tests/           46 academic tests
+SAMPLES FISH/      320 source photographs + metadata.csv (NOT in Git)
+tools/             dataset collector (unchanged)
+docs/              dashboard screenshot + DATASET.md (sources and licences)
 THIRD_PARTY.md     model and dependency attribution
 setup.sh           one-time setup
 run.sh             start the dashboard
 run_tests.sh       run the test suite
 ```
+
+`Phase_E_audit.md` is a superseded historical audit (276 images / 69 labels);
+the current audit is `assignment/reports/phase1_audit.json`.
 
 ---
 

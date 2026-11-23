@@ -39,6 +39,19 @@ artifacts/
 *.tmp
 *.part
 
+# Academic dataset and generated assignment outputs.
+# Third-party photographs are NOT published: check per-image licence and
+# attribution in "SAMPLES FISH/metadata.csv" before any redistribution.
+# Reproduce the dataset with tools/collect_fish_samples.py and the metadata URLs.
+SAMPLES FISH/
+.collector/
+assignment/artifacts/
+
+# Keep academic source code (the generic data/ rule above would hide it).
+!assignment/data/
+# Generated review media and worksheets stay local; the decision manifest is kept.
+assignment/data/review/
+
 # Personal media, webcam captures, and private datasets
 *.jpg
 *.jpeg

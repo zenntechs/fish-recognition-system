@@ -1,0 +1,8 @@
+-r ../requirements.txt
+
+# Additional dependencies for the academic training pipeline.
+# scikit-learn is intentionally NOT required: all metrics (confusion matrix,
+# precision, recall, F1) are implemented in pure NumPy so the pipeline runs
+# without it. Install scikit-learn only if you prefer its implementations.
+matplotlib>=3.8
+PyYAML>=6.0
